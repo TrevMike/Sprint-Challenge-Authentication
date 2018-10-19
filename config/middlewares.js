@@ -1,10 +1,10 @@
 const jwt = require('jsonwebtoken');
-
-const jwtKey = require('../_secrets/keys').jwtKey;
+const jwtKey = require('../_secrets/keys.js').jwtKey;
 
 // quickly see what this file exports
 module.exports = {
   authenticate,
+  generateToken
 };
 
 // implementation details
@@ -25,3 +25,18 @@ function authenticate(req, res, next) {
     });
   }
 }
+
+function generateToken(user){
+  const payload = {
+    username: user.username,
+  }
+// const jwtKey= 'Why can’t banks keep secrets? There are too many tellers!'
+
+  const options = {
+    expiresIn: '1h',
+    jwtid:'12345'
+  }
+  return jwt.sign(payload, jwtKey, options)
+} 
+
+// payload, secret, options

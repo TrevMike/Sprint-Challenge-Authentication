@@ -1,6 +1,7 @@
 const axios = require('axios');
-
-const { authenticate } = require('./middlewares');
+const db = require('../database/dbConfig');
+bcrypt = require('bcryptjs');
+const { authenticate, generateToken } = require('./middlewares');
 
 module.exports = server => {
   server.post('/api/register', register);
@@ -9,12 +10,44 @@ module.exports = server => {
 };
 
 function register(req, res) {
-  // implement user registration
-}
+  const creds = req.body
+
+  const hash = bcrypt.hashSync(creds.password, 10);
+  creds.password = hash;
+
+  db('users')
+    .insert(creds)
+    .then(ids => {
+      const id = ids[0];
+
+  db('users')
+    .where({ id })
+    .first()
+    .then(user => {
+      const token = generateToken(user);
+      res.status(201).json({id: user.id, token});
+    })
+    .catch(err => res.status(500).send(err));
+    })
+    .catch(err => res.status(500).json(err));
+};
 
 function login(req, res) {
-  // implement user login
-}
+  const creds = req.body;
+
+  db('users')
+    .where({ username: creds.username })
+    .first()
+    .then(user => {
+      if (user && bcrypt.compareSync(creds.password, user.password)) {
+        const token = generateToken(user);
+        res.status(200).json({ token });
+      } else {
+        res.status(401).json({ message: 'NOT AUTH TRY AGAIN!'})
+      }
+    })
+    .catch(err => res.status(500).json(err))
+};
 
 function getJokes(req, res) {
   axios
